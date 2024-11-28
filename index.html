@@ -2,11 +2,11 @@
 <html>
 <head>
     <title>암호화폐 거래 계산기</title>
+    <meta charset="utf-8">
     <script src="https://unpkg.com/react@17/umd/react.development.js"></script>
     <script src="https://unpkg.com/react-dom@17/umd/react-dom.development.js"></script>
     <script src="https://unpkg.com/babel-standalone@6.26.0/babel.min.js"></script>
     <link href="https://cdn.jsdelivr.net/npm/tailwindcss@2.2.19/dist/tailwind.min.css" rel="stylesheet">
-    <meta charset="utf-8">
 </head>
 <body class="bg-gray-100">
     <div id="root"></div>
@@ -26,7 +26,8 @@
                 fundingTime: "",
                 usdtRate: 1350,
                 entryPrice: 95712,
-                currentPrice: 95712
+                currentPrice: 95712,
+                etc: ""
             });
 
             useEffect(() => {
@@ -44,106 +45,197 @@
 
             const calculateResults = () => {
                 const tradingAmount = values.amount * values.leverage;
-                const contractSize = tradingAmount / values.entryPrice;
+                const contracts = tradingAmount / values.entryPrice;
                 
                 const entryFeeTaker = tradingAmount * values.takerFee;
                 const exitFeeTaker = tradingAmount * values.takerFee;
+                const totalFeeTaker = entryFeeTaker + exitFeeTaker;
                 
                 const entryFeeMaker = tradingAmount * values.makerFee;
                 const exitFeeMaker = tradingAmount * values.makerFee;
+                const totalFeeMaker = entryFeeMaker + exitFeeMaker;
 
                 const dailyFundingTimes = 24 / values.fundingHours;
-                const fundingFee = tradingAmount * values.fundingRate * dailyFundingTimes;
+                const fundingFee = tradingAmount * values.fundingRate;
+                const dailyFundingFee = fundingFee * dailyFundingTimes;
                 
                 const priceDiff = values.currentPrice - values.entryPrice;
-                const longPnL = contractSize * priceDiff;
-                const shortPnL = contractSize * -priceDiff;
+                const longPnL = contracts * priceDiff;
+                const shortPnL = contracts * -priceDiff;
+
+                const pricePerPnL = contracts;
 
                 return {
                     tradingAmount,
-                    contractSize,
+                    contracts,
                     entryFeeTaker,
                     exitFeeTaker,
+                    totalFeeTaker,
                     entryFeeMaker,
                     exitFeeMaker,
+                    totalFeeMaker,
                     fundingFee,
+                    dailyFundingFee,
                     longPnL,
-                    shortPnL
+                    shortPnL,
+                    pricePerPnL
                 };
             };
 
             const results = calculateResults();
 
+            const toKRW = (usdt) => {
+                return (usdt * values.usdtRate).toLocaleString('ko-KR');
+            };
+
+            const InputField = ({ label, value, onChange, step = "any", min = "0" }) => (
+                <div className="flex-1 min-w-0">
+                    <label className="block text-sm font-medium text-gray-700 mb-1">{label}</label>
+                    <input
+                        type="number"
+                        value={value}
+                        onChange={onChange}
+                        step={step}
+                        min={min}
+                        className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
+                        onDoubleClick={(e) => e.target.select()}
+                        onFocus={(e) => e.target.select()}
+                    />
+                </div>
+            );
+
             return (
-                <div className="max-w-4xl mx-auto p-4">
-                    <h1 className="text-2xl font-bold mb-4">암호화폐 거래 계산기</h1>
+                <div className="max-w-6xl mx-auto p-4 space-y-6">
+                    <h1 className="text-2xl font-bold text-gray-900">암호화폐 거래 계산기</h1>
                     
-                    <div className="bg-white rounded-lg shadow p-6 mb-6">
-                        <h2 className="text-xl font-semibold mb-4">입력 정보</h2>
-                        <div className="grid grid-cols-4 gap-4">
-                            <div>
-                                <label className="block text-sm font-medium text-gray-700">투자금액 (USDT)</label>
-                                <input
-                                    type="number"
+                    <div className="bg-white rounded-lg shadow p-6">
+                        <div className="space-y-4">
+                            <div className="grid grid-cols-4 gap-4">
+                                <InputField 
+                                    label="투자금액 (USDT)"
                                     value={values.amount}
-                                    onChange={(e) => setValues({...values, amount: parseFloat(e.target.value)})}
-                                    className="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500"
+                                    onChange={(e) => setValues({...values, amount: parseFloat(e.target.value) || 0})}
                                 />
-                            </div>
-                            <div>
-                                <label className="block text-sm font-medium text-gray-700">레버리지</label>
-                                <input
-                                    type="number"
+                                <InputField 
+                                    label="레버리지"
                                     value={values.leverage}
-                                    onChange={(e) => setValues({...values, leverage: parseFloat(e.target.value)})}
-                                    className="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500"
+                                    onChange={(e) => setValues({...values, leverage: parseFloat(e.target.value) || 0})}
                                 />
-                            </div>
-                            <div>
-                                <label className="block text-sm font-medium text-gray-700">테이커 수수료 (%)</label>
-                                <input
-                                    type="number"
-                                    step="0.0001"
+                                <InputField 
+                                    label="테이커 수수료 (%)"
                                     value={values.takerFee * 100}
-                                    onChange={(e) => setValues({...values, takerFee: parseFloat(e.target.value) / 100})}
-                                    className="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500"
+                                    onChange={(e) => setValues({...values, takerFee: parseFloat(e.target.value) / 100 || 0})}
+                                    step="0.0001"
+                                />
+                                <InputField 
+                                    label="메이커 수수료 (%)"
+                                    value={values.makerFee * 100}
+                                    onChange={(e) => setValues({...values, makerFee: parseFloat(e.target.value) / 100 || 0})}
+                                    step="0.0001"
                                 />
                             </div>
-                            <div>
-                                <label className="block text-sm font-medium text-gray-700">메이커 수수료 (%)</label>
-                                <input
-                                    type="number"
+                            
+                            <div className="grid grid-cols-4 gap-4">
+                                <InputField 
+                                    label="펀딩비율 (%)"
+                                    value={values.fundingRate * 100}
+                                    onChange={(e) => setValues({...values, fundingRate: parseFloat(e.target.value) / 100 || 0})}
                                     step="0.0001"
-                                    value={values.makerFee * 100}
-                                    onChange={(e) => setValues({...values, makerFee: parseFloat(e.target.value) / 100})}
-                                    className="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500"
+                                />
+                                <InputField 
+                                    label="펀딩주기 (시간)"
+                                    value={values.fundingHours}
+                                    onChange={(e) => setValues({...values, fundingHours: parseFloat(e.target.value) || 0})}
+                                />
+                                <div className="flex gap-2">
+                                    <InputField 
+                                        label="남은시간"
+                                        value={values.remainingHours}
+                                        onChange={(e) => setValues({...values, remainingHours: parseInt(e.target.value) || 0})}
+                                        step="1"
+                                    />
+                                    <InputField 
+                                        label="남은분"
+                                        value={values.remainingMinutes}
+                                        onChange={(e) => setValues({...values, remainingMinutes: parseInt(e.target.value) || 0})}
+                                        step="1"
+                                        min="0"
+                                    />
+                                </div>
+                                <div>
+                                    <label className="block text-sm font-medium text-gray-700 mb-1">마감시각</label>
+                                    <div className="px-3 py-2 border border-gray-300 rounded-md bg-gray-50">
+                                        {values.fundingTime}
+                                    </div>
+                                </div>
+                            </div>
+                            
+                            <div className="grid grid-cols-4 gap-4">
+                                <InputField 
+                                    label="USDT 환율 (원)"
+                                    value={values.usdtRate}
+                                    onChange={(e) => setValues({...values, usdtRate: parseFloat(e.target.value) || 0})}
+                                />
+                                <InputField 
+                                    label="진입가격"
+                                    value={values.entryPrice}
+                                    onChange={(e) => setValues({...values, entryPrice: parseFloat(e.target.value) || 0})}
+                                />
+                                <InputField 
+                                    label="현재가격"
+                                    value={values.currentPrice}
+                                    onChange={(e) => setValues({...values, currentPrice: parseFloat(e.target.value) || 0})}
+                                />
+                                <InputField 
+                                    label="기타"
+                                    value={values.etc}
+                                    onChange={(e) => setValues({...values, etc: e.target.value})}
                                 />
                             </div>
                         </div>
                     </div>
 
-                    <div className="bg-white rounded-lg shadow p-6 mb-6">
+                    <div className="bg-white rounded-lg shadow p-6">
                         <h2 className="text-xl font-semibold mb-4">계산 결과</h2>
-                        <div className="grid grid-cols-2 gap-4">
-                            <div>
-                                <h3 className="font-medium">거래 정보</h3>
-                                <p>총 거래금액: {results.tradingAmount.toLocaleString()} USDT</p>
-                                <p>계약 수량: {results.contractSize.toFixed(4)}</p>
+                        <div className="grid grid-cols-2 gap-6">
+                            <div className="space-y-2">
+                                <h3 className="font-medium text-gray-900">거래 정보</h3>
+                                <p>총 거래금액: {results.tradingAmount.toLocaleString()} USDT (₩{toKRW(results.tradingAmount)})</p>
+                                <p>계약 수량: {results.contracts.toFixed(4)}</p>
+                                <p>가격당 손익: {results.pricePerPnL.toFixed(4)} USDT (₩{toKRW(results.pricePerPnL)})</p>
                             </div>
-                            <div>
-                                <h3 className="font-medium">테이커 수수료</h3>
-                                <p>진입: {results.entryFeeTaker.toFixed(2)} USDT</p>
-                                <p>청산: {results.exitFeeTaker.toFixed(2)} USDT</p>
+
+                            <div className="space-y-2">
+                                <h3 className="font-medium text-gray-900">수수료 정보</h3>
+                                <div>
+                                    <p>테이커 수수료:</p>
+                                    <p className="ml-4">진입: {results.entryFeeTaker.toFixed(2)} USDT (₩{toKRW(results.entryFeeTaker)})</p>
+                                    <p className="ml-4">청산: {results.exitFeeTaker.toFixed(2)} USDT (₩{toKRW(results.exitFeeTaker)})</p>
+                                    <p className="ml-4">합계: {results.totalFeeTaker.toFixed(2)} USDT (₩{toKRW(results.totalFeeTaker)})</p>
+                                </div>
+                                <div>
+                                    <p>메이커 수수료:</p>
+                                    <p className="ml-4">진입: {results.entryFeeMaker.toFixed(2)} USDT (₩{toKRW(results.entryFeeMaker)})</p>
+                                    <p className="ml-4">청산: {results.exitFeeMaker.toFixed(2)} USDT (₩{toKRW(results.exitFeeMaker)})</p>
+                                    <p className="ml-4">합계: {results.totalFeeMaker.toFixed(2)} USDT (₩{toKRW(results.totalFeeMaker)})</p>
+                                </div>
                             </div>
-                            <div>
-                                <h3 className="font-medium">메이커 수수료</h3>
-                                <p>진입: {results.entryFeeMaker.toFixed(2)} USDT</p>
-                                <p>청산: {results.exitFeeMaker.toFixed(2)} USDT</p>
+
+                            <div className="space-y-2">
+                                <h3 className="font-medium text-gray-900">펀딩비 정보</h3>
+                                <p>1회 펀딩비: {results.fundingFee.toFixed(2)} USDT (₩{toKRW(results.fundingFee)})</p>
+                                <p>일일 예상 펀딩비: {results.dailyFundingFee.toFixed(2)} USDT (₩{toKRW(results.dailyFundingFee)})</p>
+                                <p>다음 정산시각: {values.fundingTime}</p>
                             </div>
-                            <div>
-                                <h3 className="font-medium">예상 수익/손실</h3>
-                                <p>롱포지션: {results.longPnL.toFixed(2)} USDT</p>
-                                <p>숏포지션: {results.shortPnL.toFixed(2)} USDT</p>
+
+                            <div className="space-y-2">
+                                <h3 className="font-medium text-gray-900">포지션 손익</h3>
+                                <div className={`p-2 rounded ${results.longPnL >= 0 ? 'bg-green-50' : 'bg-red-50'}`}>
+                                    <p>롱 포지션: {results.longPnL.toFixed(2)} USDT (₩{toKRW(results.longPnL)})</p>
+                                </div>
+                                <div className={`p-2 rounded ${results.shortPnL >= 0 ? 'bg-green-50' : 'bg-red-50'}`}>
+                                    <p>숏 포지션: {results.shortPnL.toFixed(2)} USDT (₩{toKRW(results.shortPnL)})</p>
+                                </div>
                             </div>
                         </div>
                     </div>
