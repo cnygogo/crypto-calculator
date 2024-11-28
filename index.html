@@ -15,18 +15,18 @@
 
         function Calculator() {
             const [values, setValues] = useState({
-                amount: 100000,
-                leverage: 50,
-                takerFee: 0.00055,
-                makerFee: 0.0002,
-                fundingRate: 0.0001,
-                fundingHours: 8,
-                remainingHours: 2,
-                remainingMinutes: 30,
+                amount: "100000",
+                leverage: "50",
+                takerFee: "0.055",
+                makerFee: "0.02",
+                fundingRate: "0.01",
+                fundingHours: "8",
+                remainingHours: "2",
+                remainingMinutes: "30",
                 fundingTime: "",
-                usdtRate: 1350,
-                entryPrice: 95712,
-                currentPrice: 95712,
+                usdtRate: "1350",
+                entryPrice: "95712",
+                currentPrice: "95712",
                 etc: ""
             });
 
@@ -34,7 +34,7 @@
                 const now = new Date();
                 const futureTime = new Date(
                     now.getTime() + 
-                    (values.remainingHours * 60 + values.remainingMinutes) * 60000
+                    (parseInt(values.remainingHours) * 60 + parseInt(values.remainingMinutes)) * 60000
                 );
                 const timeString = futureTime.toLocaleTimeString('ko-KR', { 
                     hour: '2-digit', 
@@ -44,32 +44,26 @@
             }, [values.remainingHours, values.remainingMinutes]);
 
             const handleNumberChange = (field, value) => {
-                if (value === "") {
-                    return;
-                }
-                const number = parseFloat(value);
-                if (!isNaN(number)) {
-                    setValues({ ...values, [field]: number });
-                }
+                setValues({ ...values, [field]: value });
             };
 
             const results = useMemo(() => {
-                const tradingAmount = values.amount * values.leverage;
-                const contracts = tradingAmount / values.entryPrice;
+                const tradingAmount = parseFloat(values.amount) * parseFloat(values.leverage);
+                const contracts = tradingAmount / parseFloat(values.entryPrice);
                 
-                const entryFeeTaker = tradingAmount * values.takerFee;
-                const exitFeeTaker = tradingAmount * values.takerFee;
+                const entryFeeTaker = tradingAmount * (parseFloat(values.takerFee) / 100);
+                const exitFeeTaker = tradingAmount * (parseFloat(values.takerFee) / 100);
                 const totalFeeTaker = entryFeeTaker + exitFeeTaker;
                 
-                const entryFeeMaker = tradingAmount * values.makerFee;
-                const exitFeeMaker = tradingAmount * values.makerFee;
+                const entryFeeMaker = tradingAmount * (parseFloat(values.makerFee) / 100);
+                const exitFeeMaker = tradingAmount * (parseFloat(values.makerFee) / 100);
                 const totalFeeMaker = entryFeeMaker + exitFeeMaker;
 
-                const dailyFundingTimes = 24 / values.fundingHours;
-                const fundingFee = tradingAmount * values.fundingRate;
+                const dailyFundingTimes = 24 / parseFloat(values.fundingHours);
+                const fundingFee = tradingAmount * (parseFloat(values.fundingRate) / 100);
                 const dailyFundingFee = fundingFee * dailyFundingTimes;
                 
-                const priceDiff = values.currentPrice - values.entryPrice;
+                const priceDiff = parseFloat(values.currentPrice) - parseFloat(values.entryPrice);
                 const longPnL = contracts * priceDiff;
                 const shortPnL = contracts * -priceDiff;
 
@@ -93,7 +87,7 @@
             }, [values]);
 
             const toKRW = (usdt) => {
-                return (usdt * values.usdtRate).toLocaleString('ko-KR');
+                return (usdt * parseFloat(values.usdtRate)).toLocaleString('ko-KR');
             };
 
             return (
@@ -127,8 +121,8 @@
                                     <label className="block text-sm font-medium text-gray-700 mb-1">테이커 수수료 (%)</label>
                                     <input
                                         type="number"
-                                        value={values.takerFee * 100}
-                                        onChange={(e) => handleNumberChange("takerFee", parseFloat(e.target.value) / 100)}
+                                        value={values.takerFee}
+                                        onChange={(e) => handleNumberChange("takerFee", e.target.value)}
                                         step="0.0001"
                                         className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
                                         onFocus={(e) => e.target.select()}
@@ -138,8 +132,8 @@
                                     <label className="block text-sm font-medium text-gray-700 mb-1">메이커 수수료 (%)</label>
                                     <input
                                         type="number"
-                                        value={values.makerFee * 100}
-                                        onChange={(e) => handleNumberChange("makerFee", parseFloat(e.target.value) / 100)}
+                                        value={values.makerFee}
+                                        onChange={(e) => handleNumberChange("makerFee", e.target.value)}
                                         step="0.0001"
                                         className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
                                         onFocus={(e) => e.target.select()}
@@ -152,8 +146,8 @@
                                     <label className="block text-sm font-medium text-gray-700 mb-1">펀딩비율 (%)</label>
                                     <input
                                         type="number"
-                                        value={values.fundingRate * 100}
-                                        onChange={(e) => handleNumberChange("fundingRate", parseFloat(e.target.value) / 100)}
+                                        value={values.fundingRate}
+                                        onChange={(e) => handleNumberChange("fundingRate", e.target.value)}
                                         step="0.0001"
                                         className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
                                         onFocus={(e) => e.target.select()}
