@@ -240,14 +240,13 @@
                     <div className="bg-white rounded-lg shadow p-6">
                         <h2 className="text-xl font-semibold mb-4">계산 결과</h2>
                         <div className="grid grid-cols-2 gap-6">
-                            <div className="space-y-2">
+                            <div className="space-y-4">
                                 <h3 className="font-medium text-gray-900">거래 정보</h3>
                                 <p>총 거래금액: {results.tradingAmount.toLocaleString()} USDT (₩{toKRW(results.tradingAmount)})</p>
                                 <p>계약 수량: {results.contracts.toFixed(4)}</p>
                                 <p>가격당 손익: {results.pricePerPnL.toFixed(4)} USDT (₩{toKRW(results.pricePerPnL)})</p>
                             </div>
-
-                            <div className="space-y-2">
+                            <div className="space-y-4">
                                 <h3 className="font-medium text-gray-900">수수료 정보</h3>
                                 <div>
                                     <p>테이커 수수료:</p>
@@ -261,6 +260,21 @@
                                     <p className="ml-4">청산: {results.exitFeeMaker.toFixed(2)} USDT (₩{toKRW(results.exitFeeMaker)})</p>
                                     <p className="ml-4">합계: {results.totalFeeMaker.toFixed(2)} USDT (₩{toKRW(results.totalFeeMaker)})</p>
                                 </div>
+                            </div>
+                        </div>
+                        <div className="mt-6">
+                            <h3 className="font-medium text-gray-900">펀딩비 정보</h3>
+                            <p>1회 펀딩비: {results.fundingFee.toFixed(2)} USDT (₩{toKRW(results.fundingFee)})</p>
+                            <p>일일 예상 펀딩비: {results.dailyFundingFee.toFixed(2)} USDT (₩{toKRW(results.dailyFundingFee)})</p>
+                            <p>다음 정산시각: {values.fundingTime}</p>
+                        </div>
+                        <div className="mt-6 space-y-2">
+                            <h3 className="font-medium text-gray-900">포지션 손익</h3>
+                            <div className="bg-green-100 text-green-800 px-4 py-2 rounded-md">
+                                <p>롱 포지션: {results.longPnL.toFixed(2)} USDT (₩{toKRW(results.longPnL)})</p>
+                            </div>
+                            <div className="bg-red-100 text-red-800 px-4 py-2 rounded-md">
+                                <p>숏 포지션: {results.shortPnL.toFixed(2)} USDT (₩{toKRW(results.shortPnL)})</p>
                             </div>
                         </div>
                     </div>
