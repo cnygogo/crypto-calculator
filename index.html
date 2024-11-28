@@ -11,7 +11,7 @@
 <body class="bg-gray-100">
     <div id="root"></div>
     <script type="text/babel">
-        const { useState, useEffect } = React;
+        const { useState, useEffect, useMemo } = React;
 
         function Calculator() {
             const [values, setValues] = useState({
@@ -43,7 +43,17 @@
                 setValues(prev => ({ ...prev, fundingTime: timeString }));
             }, [values.remainingHours, values.remainingMinutes]);
 
-            const calculateResults = () => {
+            const handleNumberChange = (field, value) => {
+                if (value === "") {
+                    return;
+                }
+                const number = parseFloat(value);
+                if (!isNaN(number)) {
+                    setValues({ ...values, [field]: number });
+                }
+            };
+
+            const results = useMemo(() => {
                 const tradingAmount = values.amount * values.leverage;
                 const contracts = tradingAmount / values.entryPrice;
                 
@@ -80,29 +90,11 @@
                     shortPnL,
                     pricePerPnL
                 };
-            };
-
-            const results = calculateResults();
+            }, [values]);
 
             const toKRW = (usdt) => {
                 return (usdt * values.usdtRate).toLocaleString('ko-KR');
             };
-
-            const InputField = ({ label, value, onChange, step = "any", min = "0" }) => (
-                <div className="flex-1 min-w-0">
-                    <label className="block text-sm font-medium text-gray-700 mb-1">{label}</label>
-                    <input
-                        type="number"
-                        value={value}
-                        onChange={onChange}
-                        step={step}
-                        min={min}
-                        className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
-                        onDoubleClick={(e) => e.target.select()}
-                        onFocus={(e) => e.target.select()}
-                    />
-                </div>
-            );
 
             return (
                 <div className="max-w-6xl mx-auto p-4 space-y-6">
@@ -111,56 +103,93 @@
                     <div className="bg-white rounded-lg shadow p-6">
                         <div className="space-y-4">
                             <div className="grid grid-cols-4 gap-4">
-                                <InputField 
-                                    label="투자금액 (USDT)"
-                                    value={values.amount}
-                                    onChange={(e) => setValues({...values, amount: parseFloat(e.target.value) || 0})}
-                                />
-                                <InputField 
-                                    label="레버리지"
-                                    value={values.leverage}
-                                    onChange={(e) => setValues({...values, leverage: parseFloat(e.target.value) || 0})}
-                                />
-                                <InputField 
-                                    label="테이커 수수료 (%)"
-                                    value={values.takerFee * 100}
-                                    onChange={(e) => setValues({...values, takerFee: parseFloat(e.target.value) / 100 || 0})}
-                                    step="0.0001"
-                                />
-                                <InputField 
-                                    label="메이커 수수료 (%)"
-                                    value={values.makerFee * 100}
-                                    onChange={(e) => setValues({...values, makerFee: parseFloat(e.target.value) / 100 || 0})}
-                                    step="0.0001"
-                                />
+                                <div className="flex-1 min-w-0">
+                                    <label className="block text-sm font-medium text-gray-700 mb-1">투자금액 (USDT)</label>
+                                    <input
+                                        type="number"
+                                        value={values.amount}
+                                        onChange={(e) => handleNumberChange("amount", e.target.value)}
+                                        className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
+                                        onFocus={(e) => e.target.select()}
+                                    />
+                                </div>
+                                <div className="flex-1 min-w-0">
+                                    <label className="block text-sm font-medium text-gray-700 mb-1">레버리지</label>
+                                    <input
+                                        type="number"
+                                        value={values.leverage}
+                                        onChange={(e) => handleNumberChange("leverage", e.target.value)}
+                                        className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
+                                        onFocus={(e) => e.target.select()}
+                                    />
+                                </div>
+                                <div className="flex-1 min-w-0">
+                                    <label className="block text-sm font-medium text-gray-700 mb-1">테이커 수수료 (%)</label>
+                                    <input
+                                        type="number"
+                                        value={values.takerFee * 100}
+                                        onChange={(e) => handleNumberChange("takerFee", parseFloat(e.target.value) / 100)}
+                                        step="0.0001"
+                                        className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
+                                        onFocus={(e) => e.target.select()}
+                                    />
+                                </div>
+                                <div className="flex-1 min-w-0">
+                                    <label className="block text-sm font-medium text-gray-700 mb-1">메이커 수수료 (%)</label>
+                                    <input
+                                        type="number"
+                                        value={values.makerFee * 100}
+                                        onChange={(e) => handleNumberChange("makerFee", parseFloat(e.target.value) / 100)}
+                                        step="0.0001"
+                                        className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
+                                        onFocus={(e) => e.target.select()}
+                                    />
+                                </div>
                             </div>
                             
                             <div className="grid grid-cols-4 gap-4">
-                                <InputField 
-                                    label="펀딩비율 (%)"
-                                    value={values.fundingRate * 100}
-                                    onChange={(e) => setValues({...values, fundingRate: parseFloat(e.target.value) / 100 || 0})}
-                                    step="0.0001"
-                                />
-                                <InputField 
-                                    label="펀딩주기 (시간)"
-                                    value={values.fundingHours}
-                                    onChange={(e) => setValues({...values, fundingHours: parseFloat(e.target.value) || 0})}
-                                />
+                                <div className="flex-1 min-w-0">
+                                    <label className="block text-sm font-medium text-gray-700 mb-1">펀딩비율 (%)</label>
+                                    <input
+                                        type="number"
+                                        value={values.fundingRate * 100}
+                                        onChange={(e) => handleNumberChange("fundingRate", parseFloat(e.target.value) / 100)}
+                                        step="0.0001"
+                                        className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
+                                        onFocus={(e) => e.target.select()}
+                                    />
+                                </div>
+                                <div className="flex-1 min-w-0">
+                                    <label className="block text-sm font-medium text-gray-700 mb-1">펀딩주기 (시간)</label>
+                                    <input
+                                        type="number"
+                                        value={values.fundingHours}
+                                        onChange={(e) => handleNumberChange("fundingHours", e.target.value)}
+                                        className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
+                                        onFocus={(e) => e.target.select()}
+                                    />
+                                </div>
                                 <div className="flex gap-2">
-                                    <InputField 
-                                        label="남은시간"
-                                        value={values.remainingHours}
-                                        onChange={(e) => setValues({...values, remainingHours: parseInt(e.target.value) || 0})}
-                                        step="1"
-                                    />
-                                    <InputField 
-                                        label="남은분"
-                                        value={values.remainingMinutes}
-                                        onChange={(e) => setValues({...values, remainingMinutes: parseInt(e.target.value) || 0})}
-                                        step="1"
-                                        min="0"
-                                    />
+                                    <div className="flex-1 min-w-0">
+                                        <label className="block text-sm font-medium text-gray-700 mb-1">남은시간</label>
+                                        <input
+                                            type="number"
+                                            value={values.remainingHours}
+                                            onChange={(e) => handleNumberChange("remainingHours", e.target.value)}
+                                            className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
+                                            onFocus={(e) => e.target.select()}
+                                        />
+                                    </div>
+                                    <div className="flex-1 min-w-0">
+                                        <label className="block text-sm font-medium text-gray-700 mb-1">남은분</label>
+                                        <input
+                                            type="number"
+                                            value={values.remainingMinutes}
+                                            onChange={(e) => handleNumberChange("remainingMinutes", e.target.value)}
+                                            className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
+                                            onFocus={(e) => e.target.select()}
+                                        />
+                                    </div>
                                 </div>
                                 <div>
                                     <label className="block text-sm font-medium text-gray-700 mb-1">마감시각</label>
@@ -171,26 +200,45 @@
                             </div>
                             
                             <div className="grid grid-cols-4 gap-4">
-                                <InputField 
-                                    label="USDT 환율 (원)"
-                                    value={values.usdtRate}
-                                    onChange={(e) => setValues({...values, usdtRate: parseFloat(e.target.value) || 0})}
-                                />
-                                <InputField 
-                                    label="진입가격"
-                                    value={values.entryPrice}
-                                    onChange={(e) => setValues({...values, entryPrice: parseFloat(e.target.value) || 0})}
-                                />
-                                <InputField 
-                                    label="현재가격"
-                                    value={values.currentPrice}
-                                    onChange={(e) => setValues({...values, currentPrice: parseFloat(e.target.value) || 0})}
-                                />
-                                <InputField 
-                                    label="기타"
-                                    value={values.etc}
-                                    onChange={(e) => setValues({...values, etc: e.target.value})}
-                                />
+                                <div className="flex-1 min-w-0">
+                                    <label className="block text-sm font-medium text-gray-700 mb-1">USDT 환율 (원)</label>
+                                    <input
+                                        type="number"
+                                        value={values.usdtRate}
+                                        onChange={(e) => handleNumberChange("usdtRate", e.target.value)}
+                                        className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
+                                        onFocus={(e) => e.target.select()}
+                                    />
+                                </div>
+                                <div className="flex-1 min-w-0">
+                                    <label className="block text-sm font-medium text-gray-700 mb-1">진입가격</label>
+                                    <input
+                                        type="number"
+                                        value={values.entryPrice}
+                                        onChange={(e) => handleNumberChange("entryPrice", e.target.value)}
+                                        className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
+                                        onFocus={(e) => e.target.select()}
+                                    />
+                                </div>
+                                <div className="flex-1 min-w-0">
+                                    <label className="block text-sm font-medium text-gray-700 mb-1">현재가격</label>
+                                    <input
+                                        type="number"
+                                        value={values.currentPrice}
+                                        onChange={(e) => handleNumberChange("currentPrice", e.target.value)}
+                                        className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
+                                        onFocus={(e) => e.target.select()}
+                                    />
+                                </div>
+                                <div className="flex-1 min-w-0">
+                                    <label className="block text-sm font-medium text-gray-700 mb-1">기타</label>
+                                    <input
+                                        type="text"
+                                        value={values.etc}
+                                        onChange={(e) => setValues({...values, etc: e.target.value})}
+                                        className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
+                                    />
+                                </div>
                             </div>
                         </div>
                     </div>
@@ -218,23 +266,6 @@
                                     <p className="ml-4">진입: {results.entryFeeMaker.toFixed(2)} USDT (₩{toKRW(results.entryFeeMaker)})</p>
                                     <p className="ml-4">청산: {results.exitFeeMaker.toFixed(2)} USDT (₩{toKRW(results.exitFeeMaker)})</p>
                                     <p className="ml-4">합계: {results.totalFeeMaker.toFixed(2)} USDT (₩{toKRW(results.totalFeeMaker)})</p>
-                                </div>
-                            </div>
-
-                            <div className="space-y-2">
-                                <h3 className="font-medium text-gray-900">펀딩비 정보</h3>
-                                <p>1회 펀딩비: {results.fundingFee.toFixed(2)} USDT (₩{toKRW(results.fundingFee)})</p>
-                                <p>일일 예상 펀딩비: {results.dailyFundingFee.toFixed(2)} USDT (₩{toKRW(results.dailyFundingFee)})</p>
-                                <p>다음 정산시각: {values.fundingTime}</p>
-                            </div>
-
-                            <div className="space-y-2">
-                                <h3 className="font-medium text-gray-900">포지션 손익</h3>
-                                <div className={`p-2 rounded ${results.longPnL >= 0 ? 'bg-green-50' : 'bg-red-50'}`}>
-                                    <p>롱 포지션: {results.longPnL.toFixed(2)} USDT (₩{toKRW(results.longPnL)})</p>
-                                </div>
-                                <div className={`p-2 rounded ${results.shortPnL >= 0 ? 'bg-green-50' : 'bg-red-50'}`}>
-                                    <p>숏 포지션: {results.shortPnL.toFixed(2)} USDT (₩{toKRW(results.shortPnL)})</p>
                                 </div>
                             </div>
                         </div>
